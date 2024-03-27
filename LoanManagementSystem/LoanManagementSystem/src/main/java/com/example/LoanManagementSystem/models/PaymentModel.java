@@ -14,7 +14,6 @@ public class PaymentModel {
     private Long paymentId;
     private Loan loan;
     @NotNull(message = "Payment Date is Required")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-M-d",lenient = OptBoolean.FALSE)
     private Date paymentDate;
     @NotNull(message = " Amount is Required")
     private double amount;

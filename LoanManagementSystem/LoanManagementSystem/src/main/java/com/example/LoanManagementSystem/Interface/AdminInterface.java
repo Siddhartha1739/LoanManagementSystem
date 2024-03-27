@@ -8,8 +8,8 @@ import org.springframework.http.ResponseEntity;
 import java.util.List;
 
 public interface AdminInterface {
-     ResponseEntity<?> addAdmin(AdminModel adminModel);
-     ResponseEntity<?> viewAdmin();
-     ResponseEntity<?> updateAdmin(Long adminId, Admin admin);
+
+     ResponseEntity<?> viewAdmin(Long adminId);
+     ResponseEntity<?> updateAdmin(Long adminId, AdminModel admin);
     ResponseEntity<?> approveLoans(Long loanApprovalId, Long adminId, LoanApproval loanApproval);
 }

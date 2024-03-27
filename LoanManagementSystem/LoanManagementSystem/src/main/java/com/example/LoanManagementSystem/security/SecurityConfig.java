@@ -33,21 +33,27 @@ public class SecurityConfig  {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.authorizeRequests(authorizeRequests ->
                         authorizeRequests
-                                .requestMatchers(HttpMethod.POST,"/admin/addAdmin").permitAll()
-                                .requestMatchers(HttpMethod.PUT,"/admin//update").hasRole("ADMIN")
-                                .requestMatchers(HttpMethod.DELETE,"/admin/deleteAdmin").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.PUT,"/admin/update").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.DELETE,"/admin/viewAdmin").hasRole("ADMIN")
                                 .requestMatchers(HttpMethod.PUT,"/admin/approve").hasRole("ADMIN")
                                 .requestMatchers(HttpMethod.POST,"/loanApplications/applyLoan").hasRole("USER")
-                                .requestMatchers(HttpMethod.DELETE,"/loanApplications/delete").hasAnyRole("ADMIN","USER")
+                                .requestMatchers(HttpMethod.DELETE,"/loanApplications/delete").hasAnyRole("USER")
                                 .requestMatchers(HttpMethod.GET,"/loanApplications/getLoan").hasAnyRole("ADMIN","USER")
-                                .requestMatchers(HttpMethod.PUT,"/loanApplications/updateLoan").hasAnyRole("ADMIN","USER")
+                                .requestMatchers(HttpMethod.GET,"/loanApplications/getAllLoans").hasAnyRole("ADMIN")
+                                .requestMatchers(HttpMethod.PUT,"/loanApplications/updateLoan").hasAnyRole("USER")
                                 .requestMatchers(HttpMethod.POST,"/loanApprovals/approveLoan").hasRole("ADMIN")
-                                .requestMatchers(HttpMethod.POST,"/loans/createLoan").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.POST,"/loanApprovals/getLoanApprovel").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.POST,"/loanApprovals/update").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.POST,"/loans/createLoan").hasRole("USER")
                                 .requestMatchers(HttpMethod.POST,"/loans/get").hasAnyRole("ADMIN","USER")
+                                .requestMatchers(HttpMethod.POST,"/loans/update").hasAnyRole("USER")
                                 .requestMatchers(HttpMethod.POST,"/payments/pay").hasRole("USER")
                                 .requestMatchers(HttpMethod.GET,"/payments/get").hasAnyRole("ADMIN","USER")
+                                .requestMatchers(HttpMethod.GET,"/paymentSchedules/get").hasAnyRole("ADMIN","USER")
+                                .requestMatchers(HttpMethod.GET,"/paymentSchedules/getUserPayments").hasRole("ADMIN")
                                 .requestMatchers(HttpMethod.POST,"/users/addUser").permitAll()
-
+                                .requestMatchers(HttpMethod.PUT,"/users/delete").hasAnyRole("USER")
+                                .requestMatchers(HttpMethod.PUT,"/users/update").hasAnyRole("USER")
                                 .requestMatchers(HttpMethod.GET,"/users/get").hasAnyRole("ADMIN","USER"));
 
                 http.httpBasic(Customizer.withDefaults());

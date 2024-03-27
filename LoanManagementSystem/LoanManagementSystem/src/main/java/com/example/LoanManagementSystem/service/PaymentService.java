@@ -26,6 +26,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
@@ -47,17 +48,19 @@ public class PaymentService implements PaymentInterface {
 
     @Override
     public String makePayment(PaymentModel paymentModel, Long loanId) {
+       Long payId=paymentModel.getPaymentId();
+        if(!paymentRepository.existsById(payId)) {
+            Loan loan = loanRepository.getReferenceById(loanId);
+            System.out.println(loan.getPaymentSchedule());
+            PaymentSchedule paymentSchedule = loan.getPaymentSchedule().stream().filter(paymentSchedule1 -> conversion.DateToLocalDate(paymentSchedule1.getDueDate()).getMonth().equals(conversion.DateToLocalDate(paymentModel.getPaymentDate()).getMonth())).findFirst().orElse(null);
+            if (paymentSchedule == null) {
+                return "Payment Schedule is null";
+            }
+            if (loan.getRemainingAmount() <= 0) {
+                closeLoan(loan);
+                return "Your Loan is Cleared";
+            }
 
-        Loan loan=loanRepository.getReferenceById(loanId);
-        System.out.println(loan.getPaymentSchedule());
-        PaymentSchedule paymentSchedule= loan.getPaymentSchedule().stream().filter(paymentSchedule1 -> conversion.DateToLocalDate(paymentSchedule1.getDueDate()).getMonth().equals(conversion.DateToLocalDate(paymentModel.getPaymentDate()).getMonth() )).findFirst().orElse(null);
-        if(paymentSchedule==null){
-            return "Payment Schedule is null";
-        }
-        if(loan.getRemainingAmount()<=0){
-            closeLoan(loan);
-            return "Your Loan is Cleared";
-        }
 
             Payment payment = conversion.ModelToEntityPayment(paymentModel);
 
@@ -90,16 +93,12 @@ public class PaymentService implements PaymentInterface {
             loanRepository.save(loan);
             paymentRepository.save(payment);
             return "Payment Successfull";
+        }
+        return "Payment Id already exist";
 
     }
 
-    @Override
-    public void cancelPayment(Long paymentId) {
-        Payment payment=paymentRepository.findById(paymentId)
-                .orElseThrow(()->new EntityNotFoundException("Loan Not Found"));
 
-        paymentRepository.delete(payment);
-    }
 
     @Override
     public ResponseEntity<?> getPaymentById(Long paymentId) {
@@ -111,16 +110,7 @@ public class PaymentService implements PaymentInterface {
        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Payment Details not found");
     }
 
-    @Override
-    public ResponseEntity<?> updatePayment(Long paymentId, Payment payment) {
-        Payment existingPayment = paymentRepository.findById(paymentId).orElse(null);
-        if (existingPayment != null) {
-            existingPayment.setPaymentDate(payment.getPaymentDate());
-            existingPayment.setAmount(payment.getAmount());
-            return new ResponseEntity<>(paymentRepository.save(existingPayment),HttpStatus.OK);
-        }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Payment Details not found");
-    }
+
 
     @Override
     public double calculateMonthlyInstallment(double totalAmount, double months) {
@@ -147,13 +137,9 @@ public class PaymentService implements PaymentInterface {
     @Override
     public   void   calculateLoan(double amount, double apr, double months,Loan loan,Payment payment,PaymentSchedule paymentSchedule,double installment) {
         if(amount>0) {
-            double monthlyRate = apr / months;
 
             LocalDate localDate1=conversion.DateToLocalDate(payment.getPaymentDate());
             int PaymentMonth = localDate1.getMonthValue();
-
-            LocalDate localDate = conversion.DateToLocalDate(loan.getEndDate());
-            int Endmonth = localDate.getMonthValue();
 
 
             System.out.printf("Monthly Payment: $%.2f%n", installment);
@@ -174,8 +160,6 @@ public class PaymentService implements PaymentInterface {
             }
 
             double remainingBalance = amount;
-            double interest = remainingBalance * monthlyRate;
-            double principal = payment.getAmount()- interest;
             remainingBalance -= payment.getAmount() ;
             remainingBalance=skipMonthPenaulty(loan,payment,remainingBalance);
 
@@ -189,7 +173,7 @@ public class PaymentService implements PaymentInterface {
             }
 
 
-            if(remainingBalance<=0) {
+            if( remainingBalance<=0) {
                 closeLoan(loan);
             }
 
@@ -197,8 +181,7 @@ public class PaymentService implements PaymentInterface {
                 loan.setStatus(LoanStatus.DEFAULTED);
             }
 
-            System.out.printf("Interest: $%.2f, Principal: $%.2f, Remaining Balance: $%.2f%n",
-                    interest, principal, remainingBalance);
+
         }else{
             closeLoan(loan);
         }
@@ -206,17 +189,31 @@ public class PaymentService implements PaymentInterface {
 
     @Override
     public double skipMonthPenaulty(Loan loan,Payment payment,double amount){
-        Long penaulty = IntStream.range(0, loan.getPaymentSchedule().size())
-                .takeWhile(index -> {
-                    PaymentSchedule paymentSchedule = loan.getPaymentSchedule().get(index);
-                    return !conversion.DateToLocalDate(paymentSchedule.getDueDate()).getMonth().equals(conversion.DateToLocalDate(payment.getPaymentDate()).getMonth())
-                            && !paymentSchedule.isPaid()
-                            && payment.getPaymentDate() != loan.getStartDate();
+        AtomicBoolean shouldContinue = new AtomicBoolean(true);
+        int penalty = loan.getPaymentSchedule().stream()
+                .peek(paymentSchedule -> {
+                    if (!shouldContinue.get()) {
+                        return;
+                    }
+                    System.out.println(
+                            conversion.DateToLocalDate(paymentSchedule.getDueDate()).getMonth() + "  <-> " +
+                                    conversion.DateToLocalDate(payment.getPaymentDate()).getMonth() + " <-> " +
+                                    paymentSchedule.isPaid());
                 })
-                .count();
+                .takeWhile(paymentSchedule -> {
+                    if (conversion.DateToLocalDate(paymentSchedule.getDueDate()).getMonth().equals(conversion.DateToLocalDate(payment.getPaymentDate()).getMonth())) {
+                        shouldContinue.set(false);
+                        return false;
+                    }
+                    return true;
+                })
+                .filter(paymentSchedule -> !conversion.DateToLocalDate(paymentSchedule.getDueDate()).getMonth().equals(conversion.DateToLocalDate(payment.getPaymentDate()).getMonth()))
+                .filter(paymentSchedule -> !paymentSchedule.isPaid())
+                .mapToInt(paymentSchedule -> 1)
+                .sum();
 
-        amount+=penaulty* (loan.getInstallmentAmount()/2);
-        System.out.println("penaulty =="+penaulty +" "+amount);
+        amount+=penalty* (loan.getInstallmentAmount()/2);
+        System.out.println("penalty =="+penalty +" "+amount);
         return amount;
     }
 }

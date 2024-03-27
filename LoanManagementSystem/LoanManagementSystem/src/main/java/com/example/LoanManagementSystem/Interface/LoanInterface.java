@@ -13,8 +13,7 @@ import java.util.List;
 public interface LoanInterface {
     ResponseEntity<?> createLoan(LoanModel loanModel, Long loanApplicationId);
     ResponseEntity<?> getLoanById(Long loanId);
-    void deleteLoan(Long loanId);
-    ResponseEntity<?> updateLoan(Long loanId, Loan loan);
+    ResponseEntity<?> updateLoan(Long loanId, LoanModel loan);
     ResponseEntity<?> loanSanction(LoanApplication loanApplication, LoanModel loanModel, List<Loan> loansList, double LoanAmount, User user);
     void setDate(Loan loan, PaymentSchedule paymentSchedule);
     void setMonthlyInterest(Loan loan);

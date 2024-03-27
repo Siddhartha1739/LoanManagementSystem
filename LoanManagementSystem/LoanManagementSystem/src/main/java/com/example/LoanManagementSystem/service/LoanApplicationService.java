@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.security.PrivateKey;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,30 +38,33 @@ public class LoanApplicationService implements LoanApplicationInterface {
 
     @Override
     public ResponseEntity<?> applyForLoan(LoanApplicationModel loanApplicationModel,Long userId) {
-
-        LoanApplication loanApplication =conversion.ModelToEntityLoanApplication(loanApplicationModel);
-
-      double AmountRequested= loanApplication.getAmountRequested();
-
-      double maxLoanAmount = AmountRequested * 0.1;
-
-       if (loanApplication.getSalary() < maxLoanAmount) {
-           return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Amount requested exceeds 10% of monthly salary");
+        Long applicationId=loanApplicationModel.getLoanApplicationId();
+        if(!userRepository.existsById(userId)){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User not found");
         }
+        User user = userRepository.findById(userId).get();
+        if(!loanApplicationRepository.existsById(applicationId)) {
+            LoanApplication loanApplication = conversion.ModelToEntityLoanApplication(loanApplicationModel);
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+            double AmountRequested = loanApplication.getAmountRequested();
 
+            double maxLoanAmount = loanApplication.getSalary() * 0.1;
 
-       loanApplication.setUser(user);
-       loanApplication.setStatus(LoanStatus.ACTIVE);
+            if (AmountRequested < maxLoanAmount) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You are not applicable for Loan. Amount requested exceeds 10% of monthly salary");
+            }
 
-        List<LoanApplication> loanApplicationList=user.getLoanApplications();
-        loanApplicationList.add(loanApplication);
-        user.setLoanApplications(loanApplicationList);
+            loanApplication.setUser(user);
+            loanApplication.setStatus(LoanStatus.ACTIVE);
 
-        userRepository.save(user);
-       return new ResponseEntity<>(loanApplicationRepository.save(loanApplication),HttpStatus.OK);
+            List<LoanApplication> loanApplicationList = user.getLoanApplications();
+            loanApplicationList.add(loanApplication);
+            user.setLoanApplications(loanApplicationList);
+
+            userRepository.save(user);
+            return new ResponseEntity<>(loanApplicationRepository.save(loanApplication), HttpStatus.OK);
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Loan Application Id already exist");
     }
 
     @Override
@@ -76,15 +80,35 @@ public class LoanApplicationService implements LoanApplicationInterface {
     }
 
     @Override
-    public ResponseEntity<?> updateLoanApplication(Long loanApplicationId, LoanApplication loanApplication) {
+    public ResponseEntity<?> getAllLoanApplication() {
+        List<LoanApplication> loanApplicationList = loanApplicationRepository.findAll();
+        List<LoanApplicationModel> loanApplicationModelList=new ArrayList<>();
+        if (!loanApplicationList.isEmpty()) {
+            loanApplicationList.forEach(loanApplication -> {
+                LoanApplicationModel loanApplicationModel = conversion.EntityToModelLoanApplication(loanApplication);
+                loanApplicationModelList.add(loanApplicationModel);
+            });
+
+            return new ResponseEntity<>(loanApplicationModelList, HttpStatus.FOUND);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Loan Application List is Empty ");
+        }
+    }
+
+
+    @Override
+    public ResponseEntity<?> updateLoanApplication(Long loanApplicationId, LoanApplicationModel loanApplication) {
         LoanApplication existingLoanApplication = loanApplicationRepository.findById(loanApplicationId).orElse(null);
         if (null != existingLoanApplication ) {
+            if( loanApplication.getLoanApproval().getApproveStatus() != ApproveStatus.APPROVED){
+                existingLoanApplication.setAmountRequested(loanApplication.getAmountRequested());
+                existingLoanApplication.setApplicationDate(loanApplication.getApplicationDate());
+                existingLoanApplication.setStatus(loanApplication.getStatus());
 
-            existingLoanApplication.setAmountRequested(loanApplication.getAmountRequested());
-            existingLoanApplication.setApplicationDate(loanApplication.getApplicationDate());
-            existingLoanApplication.setStatus(loanApplication.getStatus());
+                return new ResponseEntity<>(loanApplicationRepository.save(existingLoanApplication),HttpStatus.OK);
+            }
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Your Loan is Approved, You can't make any changes");
 
-            return new ResponseEntity<>(loanApplicationRepository.save(existingLoanApplication),HttpStatus.OK);
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Loan Application not found");
     }

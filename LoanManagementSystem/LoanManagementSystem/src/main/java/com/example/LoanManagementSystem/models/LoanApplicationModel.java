@@ -2,13 +2,11 @@ package com.example.LoanManagementSystem.models;
 
 import com.example.LoanManagementSystem.entity.LoanApproval;
 import com.example.LoanManagementSystem.entity.User;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 import java.util.Date;
-
-import static org.springframework.data.jpa.domain.AbstractPersistable_.id;
 
 @Data
 public class LoanApplicationModel {

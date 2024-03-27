@@ -20,17 +20,14 @@ import java.util.List;
 public class AdminController {
     @Autowired
     AdminInterface adminService;
-    @PostMapping("/addAdmin")
-    public ResponseEntity<?> addAdmin(@Valid  @RequestBody AdminModel adminModel){
-        return adminService.addAdmin(adminModel);
-    }
+
     @GetMapping("/viewAdmin")
-    public ResponseEntity<?> viewAdmin(){
-        return adminService.viewAdmin();
+    public ResponseEntity<?> viewAdmin(@RequestParam Long adminId){
+        return adminService.viewAdmin(adminId);
     }
 
     @PutMapping("/update")
-    public ResponseEntity<?> updateAdmin(@RequestParam Long adminId,@RequestBody Admin admin){
+    public ResponseEntity<?> updateAdmin(@RequestParam Long adminId,@RequestBody AdminModel admin){
         return adminService.updateAdmin(adminId, admin);
     }
 

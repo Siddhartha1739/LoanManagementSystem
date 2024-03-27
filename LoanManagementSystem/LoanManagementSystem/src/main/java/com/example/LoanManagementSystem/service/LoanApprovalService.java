@@ -34,26 +34,29 @@ public class LoanApprovalService implements LoanApprovalInterface {
 
     @Override
     public ResponseEntity<?> approveLoan(LoanApprovalModel loanApprovalModel, Long adminId, Long loanApplicationId) {
+        Long loanApproveId=loanApprovalModel.getLoanApprovalId();
+        if(adminRepository.existsById(adminId) && loanApplicationRepository.existsById(loanApplicationId) && !loanApprovalRepository.existsById(loanApproveId)) {
+            LoanApproval loanApproval = conversion.ModelToEntityLoanApproval(loanApprovalModel);
 
-        LoanApproval loanApproval = conversion.ModelToEntityLoanApproval(loanApprovalModel);
+            Admin admin = adminRepository.findById(adminId)
+                    .orElseThrow(() -> new EntityNotFoundException("Admin with id " + adminId + " not found"));
 
-        Admin admin = adminRepository.findById(adminId)
-                .orElseThrow(() -> new EntityNotFoundException("Admin with id " + adminId + " not found"));
+            loanApproval.setApproveStatus(ApproveStatus.PENDING);
+            loanApproval.setAdmin(admin);
 
-        loanApproval.setApproveStatus(ApproveStatus.PENDING);
-        loanApproval.setAdmin(admin);
+            LoanApplication loanApplication = loanApplicationRepository.findById(loanApplicationId)
+                    .orElseThrow(() -> new EntityNotFoundException("LoanApplication with id " + loanApplicationId + " not found"));
 
-        LoanApplication loanApplication = loanApplicationRepository.findById(loanApplicationId)
-                .orElseThrow(() -> new EntityNotFoundException("LoanApplication with id " + loanApplicationId + " not found"));
+            loanApproval.setLoanApplication(loanApplication);
 
-        loanApproval.setLoanApplication(loanApplication);
+            LoanApproval savedLoanApproval = loanApprovalRepository.save(loanApproval);
 
-        LoanApproval savedLoanApproval = loanApprovalRepository.save(loanApproval);
+            loanApplication.setLoanApproval(savedLoanApproval);
+            loanApplicationRepository.save(loanApplication);
 
-        loanApplication.setLoanApproval(savedLoanApproval);
-        loanApplicationRepository.save(loanApplication);
-
-        return new ResponseEntity<>(savedLoanApproval,HttpStatus.OK);
+            return new ResponseEntity<>(savedLoanApproval, HttpStatus.OK);
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please check the Admin Id , Application Id and Loan Approval Id");
     }
 
 
@@ -62,15 +65,15 @@ public class LoanApprovalService implements LoanApprovalInterface {
     public ResponseEntity<?> getLoanApprovalById(Long loanApprovalId) {
         Optional<LoanApproval> loanApproval=loanApprovalRepository.findById(loanApprovalId);
         if(loanApproval.isPresent()){
-            LoanApprovalModel loanApprovalModel=conversion.EntityToModelLoanApproval(loanApprovalRepository.findById(loanApprovalId).orElse(null));
+            LoanApprovalModel loanApprovalModel=conversion.EntityToModelLoanApproval(loanApproval.get());
             return new ResponseEntity<>(loanApprovalModel,HttpStatus.OK);
         }
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Loan Approval Id not found");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Loan Approval Data not found");
     }
 
     @Override
-    public ResponseEntity<?> updateLoanApproval(Long loanApprovalId, LoanApproval loanApproval) {
+    public ResponseEntity<?> updateLoanApproval(Long loanApprovalId, LoanApprovalModel loanApproval) {
         LoanApproval existingLoanApproval = loanApprovalRepository.findById(loanApprovalId).orElse(null);
         if ( null!=existingLoanApproval  && null!=loanApproval) {
             existingLoanApproval.setApproveDate(loanApproval.getApproveDate());
@@ -78,19 +81,9 @@ public class LoanApprovalService implements LoanApprovalInterface {
 
             return new ResponseEntity<>(loanApprovalRepository.save(existingLoanApproval), HttpStatus.OK);
         }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Loan Approval Id not found");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Loan Approval Data not found");
     }
 
-
-    @Override
-    public ResponseEntity<?> cancelLoanApproval(Long loanApprovalId) {
-        boolean exists = loanApprovalRepository.existsById(loanApprovalId);
-        if (!exists) {
-            return ResponseEntity.notFound().build();
-        }
-        loanApprovalRepository.deleteById(loanApprovalId);
-        return ResponseEntity.ok().body("Loan approval with ID " + loanApprovalId + " has been successfully cancelled.");
-    }
 
 
 }

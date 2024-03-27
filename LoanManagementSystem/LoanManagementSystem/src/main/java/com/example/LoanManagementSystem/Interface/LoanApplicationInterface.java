@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 public interface LoanApplicationInterface {
      ResponseEntity<?> applyForLoan(LoanApplicationModel loanApplicationModel, Long userId);
      ResponseEntity<?> getLoanApplicationById(Long loanApplicationId);
-     ResponseEntity<?> updateLoanApplication(Long loanApplicationId, LoanApplication loanApplication);
+     ResponseEntity<?> updateLoanApplication(Long loanApplicationId, LoanApplicationModel loanApplication);
      void cancelLoanApplication(Long loanApplicationId);
+     ResponseEntity<?> getAllLoanApplication();
 }

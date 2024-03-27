@@ -6,6 +6,5 @@ import org.springframework.http.ResponseEntity;
 
 public interface PaymentScheduleInterface {
     ResponseEntity<?> getPaymentScheduleById(Long paymentScheduleId);
-     ResponseEntity<?> updatePaymentSchedule(Long paymentScheduleId, PaymentSchedule paymentSchedule);
-    void cancelPaymentSchedule(Long paymentScheduleId);
+    ResponseEntity<?> getPaymentScheduleByUser(Long userId);
 }

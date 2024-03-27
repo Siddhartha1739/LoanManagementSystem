@@ -1,5 +1,6 @@
 package com.example.LoanManagementSystem.controller;
 
+import com.example.LoanManagementSystem.Interface.LoanApplicationInterface;
 import com.example.LoanManagementSystem.entity.LoanApplication;
 import com.example.LoanManagementSystem.models.LoanApplicationModel;
 import com.example.LoanManagementSystem.service.LoanApplicationService;
@@ -14,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 public class LoanApplicationController {
 
     @Autowired
-    private LoanApplicationService loanApplicationService;
+    LoanApplicationInterface loanApplicationService;
 
     @PostMapping("/applyLoan")
     public ResponseEntity<?> applyForLoan(@Valid @RequestBody LoanApplicationModel loanApplicationModel, @RequestParam Long userId) {
@@ -27,8 +28,14 @@ public class LoanApplicationController {
 
     }
 
+    @GetMapping("/getAllLoans")
+    public ResponseEntity<?> getAllLoanApplication() {
+        return loanApplicationService.getAllLoanApplication();
+
+    }
+
     @PutMapping("/updateLoan")
-    public ResponseEntity<?> updateLoanApplication(@RequestParam Long loanApplicationId, @RequestBody LoanApplication loanApplication) {
+    public ResponseEntity<?> updateLoanApplication(@RequestParam Long loanApplicationId, @RequestBody LoanApplicationModel loanApplication) {
         return loanApplicationService.updateLoanApplication(loanApplicationId, loanApplication);
     }
 

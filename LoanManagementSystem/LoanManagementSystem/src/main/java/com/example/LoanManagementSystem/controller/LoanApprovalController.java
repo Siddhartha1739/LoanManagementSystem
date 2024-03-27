@@ -1,5 +1,6 @@
 package com.example.LoanManagementSystem.controller;
 
+import com.example.LoanManagementSystem.Interface.LoanApprovalInterface;
 import com.example.LoanManagementSystem.entity.LoanApproval;
 import com.example.LoanManagementSystem.models.LoanApprovalModel;
 import com.example.LoanManagementSystem.service.LoanApprovalService;
@@ -14,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 public class LoanApprovalController {
 
     @Autowired
-    private LoanApprovalService loanApprovalService;
+    LoanApprovalInterface loanApprovalService;
 
     @PostMapping("/approveLoan")
     public ResponseEntity<?> approveLoan(@Valid @RequestBody LoanApprovalModel loanApprovalModel, @RequestParam Long adminId, @RequestParam Long loanApplicationId) {
@@ -28,14 +29,9 @@ public class LoanApprovalController {
     }
 
     @PutMapping("/update")
-    public ResponseEntity<?> updateLoanApproval(@RequestParam Long loanApprovalId, @RequestBody LoanApproval loanApproval) {
+    public ResponseEntity<?> updateLoanApproval(@RequestParam Long loanApprovalId, @RequestBody LoanApprovalModel loanApproval) {
         return loanApprovalService.updateLoanApproval(loanApprovalId, loanApproval);
 
     }
 
-    @DeleteMapping("/delete")
-    public ResponseEntity<Void> cancelLoanApproval(@RequestParam Long loanApprovalId) {
-        loanApprovalService.cancelLoanApproval(loanApprovalId);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-    }
 }

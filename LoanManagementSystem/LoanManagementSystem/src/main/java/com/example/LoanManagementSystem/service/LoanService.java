@@ -20,10 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -68,22 +65,15 @@ public class LoanService implements LoanInterface {
     public ResponseEntity<?> getLoanById(Long loanId) {
         Optional<Loan> loan=loanRepository.findById(loanId);
         if (loan.isPresent()){
-            LoanModel loanModel=conversion.EntityToModelLoan(loanRepository.findById(loanId).orElse(null));
+            LoanModel loanModel=conversion.EntityToModelLoan(loan.get());
             return new ResponseEntity<>(loanModel,HttpStatus.OK);
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Loan Id not found");
     }
 
-    @Override
-    public void deleteLoan(Long loanId) {
-        Loan loan = loanRepository.findById(loanId)
-                .orElseThrow(() -> new EntityNotFoundException("Loan not found"));
-        loanRepository.delete(loan);
-    }
-
 
     @Override
-    public ResponseEntity<?> updateLoan(Long loanId, Loan loan) {
+    public ResponseEntity<?> updateLoan(Long loanId, LoanModel loan) {
         Loan existingLoan = loanRepository.findById(loanId).orElse(null);
         if (existingLoan != null && loan!=null) {
 
@@ -92,13 +82,13 @@ public class LoanService implements LoanInterface {
                 monthlyInterestRate=2;
                 existingLoan.setInterestRate(monthlyInterestRate);
             }if(loan.getMonths()==6){
-                monthlyInterestRate=5;
+                monthlyInterestRate=2;
                 existingLoan.setInterestRate(monthlyInterestRate);
             }if(loan.getMonths()==9){
-                monthlyInterestRate=7;
+                monthlyInterestRate=2;
                 existingLoan.setInterestRate(monthlyInterestRate);
             }if(loan.getMonths()==12){
-                monthlyInterestRate =10;
+                monthlyInterestRate =2;
                 existingLoan.setInterestRate(monthlyInterestRate);
             }
 
@@ -156,13 +146,13 @@ public class LoanService implements LoanInterface {
             monthlyInterestRate=2;
             loan.setInterestRate(monthlyInterestRate);
         }if(loan.getMonths()==6){
-            monthlyInterestRate=5;
+            monthlyInterestRate=2;
             loan.setInterestRate(monthlyInterestRate);
-        }if(loan.getMonths()==9){
-            monthlyInterestRate=7;
+        }if(loan.getMonths()==2){
+            monthlyInterestRate=2;
             loan.setInterestRate(monthlyInterestRate);
         }if(loan.getMonths()==12){
-            monthlyInterestRate =10;
+            monthlyInterestRate =2;
             loan.setInterestRate(monthlyInterestRate);
         }
     }
@@ -203,5 +193,7 @@ public class LoanService implements LoanInterface {
         System.out.println(totalAmount+ " "+rate+" "+ months+" "+LoanAmount);
         return totalAmount;
     }
+
+
 
 }

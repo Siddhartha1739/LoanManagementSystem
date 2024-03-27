@@ -32,27 +32,14 @@ public class AdminService implements AdminInterface {
     @Autowired
     private Conversion conversion;
 
-    @Override
-    public ResponseEntity<?> addAdmin(AdminModel adminModel){
-        Long adminID=adminModel.getAdminId();
-        if (!adminRepository.existsById(adminID)){
-            Admin admin=conversion.ModelToEntityAdmin(adminModel);
-            adminRepository.save(admin);
-            return new ResponseEntity<>("Admin added Successfully",HttpStatus.OK);
-        }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Admin already exist");
-    }
+
 
     @Override
-    public ResponseEntity<?> viewAdmin(){
-        List<Admin> AdminList= (List<Admin>) adminRepository.findAll();
-        List<AdminModel> AdminModelList=new ArrayList<>();
-        if(!AdminList.isEmpty()){
-            AdminList.forEach(Admin -> {
-                AdminModel AdminModel=conversion.EntityToModelAdmin(Admin);
-                AdminModelList.add(AdminModel);
-            });
-            return new ResponseEntity<>(AdminModelList,HttpStatus.OK);
+    public ResponseEntity<?> viewAdmin(Long adminId){
+        Optional<Admin> admin= adminRepository.findById(adminId);
+        if(admin.isPresent()){
+            AdminModel adminModel=conversion.EntityToModelAdmin(admin.get());
+            return new ResponseEntity<>(adminModel,HttpStatus.OK);
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("No Data found");
     }
@@ -60,15 +47,18 @@ public class AdminService implements AdminInterface {
 
 
     @Override
-    public ResponseEntity<?> updateAdmin(Long adminId, Admin admin) {
+    public ResponseEntity<?> updateAdmin(Long adminId, AdminModel admin) {
         Admin existingAdmin = adminRepository.findById(adminId).orElse(null);
         if (  null!=existingAdmin && null!=admin) {
-            existingAdmin.setName(admin.getName());
-            existingAdmin.setEmail(admin.getEmail());
-            existingAdmin.setPhoneNumber(admin.getPhoneNumber());
+            Admin adminentity=conversion.ModelToEntityAdmin(admin);
+            existingAdmin.setName(adminentity.getName());
+            existingAdmin.setEmail(adminentity.getEmail());
+            existingAdmin.setPhoneNumber(adminentity.getPhoneNumber());
+            existingAdmin.setPassword(adminentity.getPassword());
+            existingAdmin.setRole(adminentity.getRole());
             return new ResponseEntity<>(adminRepository.save(existingAdmin),HttpStatus.OK);
         }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Admin Id is not found");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Admin  is not found");
     }
 
 

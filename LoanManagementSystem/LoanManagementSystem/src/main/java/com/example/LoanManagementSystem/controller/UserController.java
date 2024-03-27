@@ -1,5 +1,6 @@
 package com.example.LoanManagementSystem.controller;
 
+import com.example.LoanManagementSystem.Interface.UserInterface;
 import com.example.LoanManagementSystem.entity.User;
 import com.example.LoanManagementSystem.entity.LoanApplication;
 import com.example.LoanManagementSystem.models.AdminModel;
@@ -16,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     @Autowired
-    private UserService userService;
+    UserInterface userService;
 
     @PostMapping("/addUser")
     public ResponseEntity<?> createUser(@Valid @RequestBody UserModel userModel) {
@@ -28,15 +29,19 @@ public class UserController {
         return userService.getUserById(userId);
     }
 
-    @PutMapping("/put")
-    public ResponseEntity<?> updateUser(@RequestParam Long userId, @RequestBody User user) {
+    @PutMapping("/update")
+    public ResponseEntity<?> updateUser(@RequestParam Long userId, @RequestBody UserModel user) {
         return userService.updateUser(userId, user);
     }
 
     @DeleteMapping("/delete")
     public ResponseEntity<?> deleteUser(@RequestParam Long userId) {
-        userService.deleteUser(userId);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        return userService.deleteUser(userId);
+    }
+
+    @GetMapping("/GetUserDetails")
+    public ResponseEntity<?> UserDetails() {
+        return userService.UserDetails();
     }
 
 }

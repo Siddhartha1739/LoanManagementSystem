@@ -3,15 +3,20 @@ package com.example.LoanManagementSystem.service;
 import com.example.LoanManagementSystem.Conversions.Conversion;
 import com.example.LoanManagementSystem.Interface.PaymentScheduleInterface;
 import com.example.LoanManagementSystem.dao.PaymentScheduleRepository;
+import com.example.LoanManagementSystem.dao.UserRepository;
 import com.example.LoanManagementSystem.entity.PaymentSchedule;
+import com.example.LoanManagementSystem.entity.User;
 import com.example.LoanManagementSystem.models.PaymentScheduleModel;
+import com.example.LoanManagementSystem.models.UserModel;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class PaymentScheduleService implements PaymentScheduleInterface {
@@ -22,9 +27,12 @@ public class PaymentScheduleService implements PaymentScheduleInterface {
     @Autowired
     private Conversion conversion;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @Override
     public ResponseEntity<?> getPaymentScheduleById(Long paymentScheduleId) {
-        Optional<PaymentSchedule> paymentSchedule=paymentScheduleRepository.findById(paymentScheduleId);
+        Optional<PaymentSchedule> paymentSchedule = paymentScheduleRepository.findById(paymentScheduleId);
         if (paymentSchedule.isPresent()) {
             PaymentScheduleModel paymentScheduleModel = conversion.EntityToModelPaymentSchedule(paymentScheduleRepository.findById(paymentScheduleId).orElse(null));
             return new ResponseEntity<>(paymentScheduleModel, HttpStatus.OK);
@@ -33,24 +41,18 @@ public class PaymentScheduleService implements PaymentScheduleInterface {
     }
 
     @Override
-    public ResponseEntity<?> updatePaymentSchedule(Long paymentScheduleId, PaymentSchedule paymentSchedule) {
-        PaymentSchedule existingPaymentSchedule = paymentScheduleRepository.findById(paymentScheduleId).orElse(null);
-        if (existingPaymentSchedule != null && paymentSchedule != null) {
-            existingPaymentSchedule.setDueDate(paymentSchedule.getDueDate());
-            existingPaymentSchedule.setInstallmentAmount(paymentSchedule.getInstallmentAmount());
-            existingPaymentSchedule.setPaid(paymentSchedule.isPaid());
+    public ResponseEntity<?> getPaymentScheduleByUser(Long userId) {
+        Optional<User> user = userRepository.findById(userId);
+        if (user.isPresent()) {
+            UserModel userModel=conversion.EntityToModelUser(user.get());
+            List<PaymentSchedule> paymentScheduleList=userModel.getLoans().stream()
+                    .flatMap(loan -> loan.getPaymentSchedule().stream())
+                    .collect(Collectors.toList());
 
-            return new ResponseEntity<>(paymentScheduleRepository.save(existingPaymentSchedule),HttpStatus.OK);
+            return new ResponseEntity<>(paymentScheduleList, HttpStatus.OK);
         }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("payment Schedule Id "+paymentScheduleId+" not found");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User not Found");
     }
 
-    @Override
-    public void cancelPaymentSchedule(Long paymentScheduleId) {
-        PaymentSchedule paymentSchedule = paymentScheduleRepository.findById(paymentScheduleId)
-                .orElseThrow(() -> new EntityNotFoundException("PaymentSchedule Not found"));
-        if (paymentSchedule != null) {
-            paymentScheduleRepository.delete(paymentSchedule);
-        }
-    }
 }
+

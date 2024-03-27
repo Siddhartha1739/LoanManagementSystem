@@ -1,5 +1,6 @@
 package com.example.LoanManagementSystem.controller;
 
+import com.example.LoanManagementSystem.Interface.PaymentScheduleInterface;
 import com.example.LoanManagementSystem.entity.PaymentSchedule;
 import com.example.LoanManagementSystem.models.PaymentScheduleModel;
 import com.example.LoanManagementSystem.service.PaymentScheduleService;
@@ -13,21 +14,15 @@ import org.springframework.web.bind.annotation.*;
 public class PaymentScheduleController {
 
     @Autowired
-    private PaymentScheduleService paymentScheduleService;
+    PaymentScheduleInterface paymentScheduleService;
 
     @GetMapping("/get")
     public ResponseEntity<?> getPaymentSchedule(@RequestParam Long paymentScheduleId) {
         return paymentScheduleService.getPaymentScheduleById(paymentScheduleId);
     }
-
-    @PutMapping("/put")
-    public ResponseEntity<?> updatePaymentSchedule(@RequestParam Long paymentScheduleId, @RequestBody PaymentSchedule paymentSchedule) {
-        return paymentScheduleService.updatePaymentSchedule(paymentScheduleId, paymentSchedule);
+    @GetMapping("/getUserPayments")
+    public ResponseEntity<?> getPaymentScheduleByUser(@RequestParam Long userId) {
+        return paymentScheduleService.getPaymentScheduleByUser(userId);
     }
 
-    @DeleteMapping("/delete")
-    public ResponseEntity<Void> cancelPaymentSchedule(@RequestParam Long paymentScheduleId) {
-        paymentScheduleService.cancelPaymentSchedule(paymentScheduleId);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-    }
 }

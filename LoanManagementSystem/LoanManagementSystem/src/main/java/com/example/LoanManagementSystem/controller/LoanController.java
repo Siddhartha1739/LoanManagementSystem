@@ -1,5 +1,6 @@
 package com.example.LoanManagementSystem.controller;
 
+import com.example.LoanManagementSystem.Interface.LoanInterface;
 import com.example.LoanManagementSystem.entity.Loan;
 import com.example.LoanManagementSystem.models.AdminModel;
 import com.example.LoanManagementSystem.models.LoanModel;
@@ -24,7 +25,7 @@ import java.util.List;
 public class LoanController {
 
     @Autowired
-    private LoanService loanService;
+    LoanInterface loanService;
 
     @PostMapping("/createLoan")
     public ResponseEntity<?> createLoan(@Valid @RequestBody LoanModel loanModel, @RequestParam Long loanApplicationId) {
@@ -36,14 +37,10 @@ public class LoanController {
         return loanService.getLoanById(loanId);}
 
     @PutMapping("/update")
-    public ResponseEntity<?> updateLoan(@RequestParam Long loanId, @RequestBody Loan loan) {
+    public ResponseEntity<?> updateLoan(@RequestParam Long loanId, @RequestBody LoanModel loan) {
         return loanService.updateLoan(loanId, loan);
     }
 
-    @DeleteMapping("/delete")
-    public ResponseEntity<Void> deleteLoan(@RequestParam Long loanId) {
-        loanService.deleteLoan(loanId);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-    }
+
 }
 

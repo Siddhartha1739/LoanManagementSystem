@@ -10,9 +10,7 @@ import javax.print.DocFlavor;
 
 public interface PaymentInterface {
     String makePayment(PaymentModel paymentModel, Long loanId);
-    void cancelPayment(Long paymentId);
     ResponseEntity<?> getPaymentById(Long paymentId);
-    ResponseEntity<?> updatePayment(Long paymentId, Payment payment);
     double calculateMonthlyInstallment(double totalAmount, double months);
     void closeLoan(Loan loan);
     void   calculateLoan(double amount, double apr, double months, Loan loan, Payment payment, PaymentSchedule paymentSchedule, double installment);
