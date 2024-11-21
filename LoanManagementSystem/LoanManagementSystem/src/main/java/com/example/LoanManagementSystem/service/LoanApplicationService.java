@@ -50,7 +50,7 @@ public class LoanApplicationService implements LoanApplicationInterface {
 
             double maxLoanAmount = loanApplication.getSalary() * 0.1;
 
-            if (AmountRequested < maxLoanAmount) {
+            if (AmountRequested >= maxLoanAmount) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You are not applicable for Loan. Amount requested exceeds 10% of monthly salary");
             }
 
